@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = 'docker-hub-credentials'
+    }
+    stages {
+        stage('Clone') {
+            steps {
+                git 'https://github.com/vijayrarecongo/usermanagement.git'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -it usermanagement-application-image:latest'
+            }
+        }
+        stage('Docker Tag') {
+            steps {
+                sh 'docker tag usermanagement-application-image:latest vijayrarecongo/usermanagement:latest'
+            }
+        }
+        stage('Docker Push') {
+            steps {
+               withCredentials([UsernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+               sh 'echo $PASS' | docker login -u $USER --password-stdin'
+               sh 'docker push vijayrarecongo/usermanagement:latest'
+        }
+        }
+} 
+        stage('Deploy') {
+          steps {
+               sh 'docker compose up -d'
+          }
+        }
+}
+}
