@@ -2,42 +2,65 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = 'docker-hub-credentials'
+        IMAGE_NAME = "vijayrarecongo/usermanagement:latest"
     }
+
     stages {
+
+        stage('Clean Workspace') {
+            steps {
+                sh 'rm -rf * .* || true'
+            }
+        }
+
         stage('Clone') {
             steps {
                 git 'https://github.com/vijayrarecongo/usermanagement.git'
             }
         }
-        
+
         stage('Build') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
         }
+
         stage('Docker Build') {
             steps {
-                sh 'docker build -it usermanagement-application-image:latest'
+                sh 'docker build -t usermanagement-application-image:latest .'
             }
         }
+
         stage('Docker Tag') {
             steps {
-                sh 'docker tag usermanagement-application-image:latest vijayrarecongo/usermanagement:latest'
+                sh 'docker tag usermanagement-application-image:latest $IMAGE_NAME'
             }
         }
+
         stage('Docker Push') {
             steps {
-               withCredentials([UsernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-               sh 'echo $PASS' | docker login -u $USER --password-stdin'
-               sh 'docker push vijayrarecongo/usermanagement:latest'
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh '''
+                        echo $PASS | docker login -u $USER --password-stdin
+                        docker push $IMAGE_NAME
+                    '''
+                }
+            }
         }
-        }
-} 
+
         stage('Deploy') {
-          steps {
-               sh 'docker compose up -d'
-          }
+            steps {
+                sh '''
+                    docker compose down || true
+                    docker compose up -d
+                '''
+            }
         }
-}
+
+        stage('Cleanup') {
+            steps {
+                sh 'rm -rf * .* || true'
+            }
+        }
+    }
 }
