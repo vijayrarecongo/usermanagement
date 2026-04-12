@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   usermanagement-application:
-    image: usermanagement-application-image:latest
+    image: vijayrarecongo/usermanagement:latest
     container_name: usermanagement-application
     ports: 
       - "8082:8081"
