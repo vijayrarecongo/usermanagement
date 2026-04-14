@@ -1,0 +1,5 @@
+com/example/webapp/WebAppApplication.class
+com/example/webapp/controller/UserController.class
+com/example/webapp/model/User.class
+com/example/webapp/service/UserService.class
+com/example/webapp/respository/UserRepository.class
